@@ -1,23 +1,14 @@
-import pyodbc
 import os
+import xmlrpclib
 
-conn = pyodbc.connect('Driver={SQL Server}; '
-                            'Server=rawdatabase.cak10k15cn9o.us-east-2.rds.amazonaws.com; '
-                            'Database=RAW; '
-                            'uid=LH;pwd=Lighthouse#12')
+s = xmlrpclib.ServerProxy('http://localhost:8000', allow_none=True)
 
 updateResultFile = open('FinishedMatch.txt', 'r')
 for line in updateResultFile:
     finishedMatchParts = line.split(' ')
     matchID = finishedMatchParts[0]
     result = finishedMatchParts[1]
-
-    cursor = conn.cursor()
-    SQLCommand = "UPDATE dbo.Matches SET Result = ? WHERE MatchID = ?"
-    Values = [result, matchID]
-    cursor.execute(SQLCommand, Values)
-    conn.commit()
+    print s.Update_Match_Results(result, matchID)
 
 updateResultFile.close()
 os.remove('FinishedMatch.txt')
-conn.close()
