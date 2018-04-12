@@ -5,30 +5,28 @@ import os
 
 class windowClass(wx.Frame):
     def __init__(self, *args, **kwargs):
-        super(windowClass, self).__init__(size=(800, 675), *args, **kwargs)
-
-        self.SetBackgroundColour('RED')
+        super(windowClass, self).__init__(size=(800, 800), *args, **kwargs)
 
         self.Centre()
         self.panel = wx.Panel(self)
 
         self.png = wx.Image('Logo.png', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-        self.logo = wx.StaticBitmap(self.panel, -1, self.png, pos=(75, 10), size=(self.png.GetWidth(), self.png.GetHeight()))
-        self.TextBox = wx.StaticText(self.panel, -1, 'Enter Username: ', pos=(270, 530))
+        self.logo = wx.StaticBitmap(self.panel, -1, self.png, pos=(35, 0), size=(700, 480))
+        self.TextBox = wx.StaticText(self.panel, -1, 'Enter Username: ', pos=(250, 480))
         self.Font = self.TextBox.GetFont().Larger().Bold()
         self.TextBox.SetFont(self.Font)
 
-        self.Username = wx.TextCtrl(self.panel, pos=(390, 531), size=(100, 20))
+        self.Username = wx.TextCtrl(self.panel, pos=(395, 483), size=(120, 20))
 
-        self.button = wx.Button(self.panel, -1, 'Enter', pos=(355, 555), size=(60, 20))
+        self.button = wx.Button(self.panel, -1, 'Enter', pos=(355, 510), size=(60, 30))
         self.Font4 = self.button.GetFont().Bold()
         self.button.SetFont(self.Font4)
         self.button.Bind(wx.EVT_BUTTON, self.OnClick)
 
-        self.result = wx.StaticText(self.panel, -1, pos=(340, 580))
+        self.result = wx.StaticText(self.panel, -1, pos=(340, 545))
         self.Font2 = self.result.GetFont().Larger().Bold()
         self.result.SetFont(self.Font2)
-        self.result2 = wx.StaticText(self.panel, -1, pos=(230, 580))
+        self.result2 = wx.StaticText(self.panel, -1, pos=(230, 545))
         self.Font3 = self.result2.GetFont().Larger().Bold()
         self.result2.SetFont(self.Font3)
 
