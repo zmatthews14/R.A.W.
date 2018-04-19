@@ -1,6 +1,7 @@
 import socket
 import serial
 import time
+import os
 
 #UDP_IP = "128.119.82.231"
 UDP_IP = "169.254.68.246"
@@ -38,7 +39,21 @@ oldPWM = 0
 while True:
     while(gameOver == True):
         print 'Enter \'start\' to start game'
-        input = raw_input()
+        ################################
+        while os.path.exists('StartMatch.txt') is False:
+            time.sleep(2)
+        startMatchFile = open('StartMatch.txt','r')
+        for line in startMatchFile:
+            startParts = line.split(' ')
+            matchID = startParts[0]
+            armUser = startParts[1]
+            opponent = startParts[2]
+            input = startParts[3]
+            print input
+        startMatchFile.close()
+        os.remove('StartMatch.txt')
+        ################################
+        #input = raw_input()
         if(input == 'start'):
             ensureSend(input.encode())
             ser.write('1\r\n')
@@ -74,6 +89,11 @@ while True:
             file = open('ForceNumbers.txt','a')
             file.write('end\n')
             file.close()
+            ############################
+            updateMatchResult = open('FinshedMatch.txt','w')
+            updateMatchResult.write(matchID + ' ' + armUser)
+            updateMatchResult.close()
+            ############################
             #wait for start from user
             gameOver = True
         if(result.decode() == 'lose'):
@@ -82,6 +102,11 @@ while True:
             file = open('ForceNumbers.txt','a')
             file.write('end\n')
             file.close()
+            ############################
+            updateMatchResult = open('FinshedMatch.txt','w')
+            updateMatchResult.write(matchID + ' ' + opponent)
+            updateMatchResult.close()
+            #############################
             #wait for start from user
             gameOver = True
     except socket.error, e:
