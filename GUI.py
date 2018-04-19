@@ -1,11 +1,10 @@
-
 import wx
 import datetime
 import xmlrpclib
 import os
 import time as TIME
 
-s = xmlrpclib.ServerProxy("http://128.119.87.208:8000", allow_none=True)
+s = xmlrpclib.ServerProxy('http://localhost:8000', allow_none=True)
 
 class windowClass(wx.Frame):
     def __init__(self, *args, **kwargs):
@@ -46,18 +45,17 @@ class windowClass(wx.Frame):
     def OnClick(self,e):
         username = self.Username.GetValue()
         open('Matches.txt','w').close()
-        
+
         lateRange = 0
         earlyRange = 0
+        matchTimeInMinutes = 0
 
         day = str(datetime.date.today().day)
         today = datetime.date.today().strftime('%A, %B ' + day + ', %Y')
 
         currentTime = datetime.datetime.now()
-        hour = (currentTime.hour) - 4
+        hour = currentTime.hour
         minute = currentTime.minute
-        
-        print currentTime
 
         if len(str(minute)) == 1:
             newMinute = '0' + str(minute)
@@ -76,7 +74,20 @@ class windowClass(wx.Frame):
             else:
                 time = str(hour) + ':' + str(newMinute) + ' AM'
 
-        print time
+        timeArray = time.split(' ')
+        timeHourMinute = timeArray[0].split(':')
+        AMPM = timeArray[1]
+        Hour = timeHourMinute[0]
+        Minutes = timeHourMinute[1]
+
+        hourToMinutes = int(Hour) * 60
+        currentTimeInMinutes = 0
+
+        if AMPM == 'PM':
+            PMaddOn = 720
+            currentTimeInMinutes = PMaddOn + hourToMinutes + int(Minutes)
+        else:
+            currentTimeInMinutes = hourToMinutes + int(Minutes)
 
 
         if s.Find_Matches() == 'No matches':
@@ -93,78 +104,43 @@ class windowClass(wx.Frame):
         for line in file:
             matchParts = line.split(' ')
             if matchParts[1] == username:
-                timeEnd = time.split(' ')
-                matchParts3DropEnd = matchParts[4].split('\n')
-                if matchParts3DropEnd[0] == timeEnd[1]:
-                    splitMatchHM = matchParts[3].split(':')
-                    splitHM = timeEnd[0].split(':')
-                    if splitMatchHM[0] == 12:
-                        splitMatchHM[0] = 0
-                    if splitHM[0] == 12:
-                        splitHM[0] = 0
-                    if splitMatchHM[0] == splitHM[0]:
-                        lateRange = int(splitHM[1]) - int(splitMatchHM[1])
-                        earlyRange = int(splitMatchHM[1]) - int(splitHM[1])
-                        print earlyRange
-                        print lateRange
-                        if earlyRange <= 30 and lateRange <= 30:
-                            self.result.SetLabel('You may begin match')
-                            file2 = open('ActiveMatch.txt', 'w')
-                            file2.write(matchParts[0] + ' ' + matchParts[1] + ' ' + matchParts[2] + ' start')
-                            file2.close()
-                            sleepcount = 0
-                            while os.path.exists('FinishedMatch.txt') is False:
-                                print sleepcount
-                                TIME.sleep(2)
-                                sleepcount = sleepcount + 1
-                            updateResultFile = open('FinishedMatch.txt', 'r')
-                            for line in updateResultFile:
-                                finishedMatchParts = line.split(' ')
-                                matchID = finishedMatchParts[0]
-                                result = finishedMatchParts[1]
-                                if username == result:
-                                    self.result.SetLabel('YOU WON!!!!')
-                                else:
-                                    self.result.SetLabel('You Lost :( ')
-                                print s.Update_Match_Results(result, matchID)
-                            updateResultFile.close()
-                            os.remove('FinishedMatch.txt')
-                        elif earlyRange > 30 and lateRange < 0:
-                            #update database with expired match
-                            self.result.SetLabel('You are too early')
-                        elif lateRange > 30 and earlyRange < 0:
-                            self.result.SetLabel('You are too late, Match Expired')
-                            updateResultFile = open('FinishedMatch.txt', 'w')
-                            updateResultFile.write(matchParts[0] + ' Expired')
-                            updateResultFile.close()
-                            updateResultFile = open('FinishedMatch.txt', 'r')
-                            for line in updateResultFile:
-                                finishedMatchParts = line.split(' ')
-                                matchID = finishedMatchParts[0]
-                                result = finishedMatchParts[1]
-                                print s.Update_Match_Results(result, matchID)
+                matchAMPM = matchParts[4].split('\n')
+                matchHourMinute = matchParts[3].split(':')
 
-                            updateResultFile.close()
-                            os.remove('FinishedMatch.txt')
-                    elif splitMatchHM[0] > splitHM[0]:
-                        self.result.SetLabel('You are too early')
-                    elif splitMatchHM[0] < splitHM[0]:
-                        self.result.SetLabel('You are too late, Match Expired')
-                        updateResultFile = open('FinishedMatch.txt', 'w')
-                        updateResultFile.write(matchParts[0] + ' Expired')
-                        updateResultFile.close()
-                        updateResultFile = open('FinishedMatch.txt', 'r')
-                        for line in updateResultFile:
-                            finishedMatchParts = line.split(' ')
-                            matchID = finishedMatchParts[0]
-                            result = finishedMatchParts[1]
-                            print s.Update_Match_Results(result, matchID)
+                matchHourtoMinutes = int(matchHourMinute[0]) * 60
 
-                        updateResultFile.close()
-                        os.remove('FinishedMatch.txt')
-                elif matchParts3DropEnd[0] == 'PM' and timeEnd == 'AM':
+                if matchAMPM[0] == 'PM':
+                    PMaddOn = 720
+                    matchTimeInMinutes = PMaddOn + matchHourtoMinutes + int(matchHourMinute[1])
+                else:
+                    matchTimeInMinutes = matchHourtoMinutes + int(matchHourMinute[1])
+
+                earlyRange = matchTimeInMinutes - currentTimeInMinutes
+                lateRange = currentTimeInMinutes - matchTimeInMinutes
+
+                if earlyRange <= 30 and lateRange <= 30:
+                    self.result.SetLabel('You may begin match')
+                    file2 = open('ActiveMatch.txt', 'w')
+                    file2.write(matchParts[0] + ' ' + matchParts[1] + ' ' + matchParts[2] + ' start')
+                    file2.close()
+                    while os.path.exists('FinishedMatch.txt') is False:
+                        self.result.SetLabel('You may begin match')
+                        TIME.sleep(2)
+                    updateResultFile = open('FinishedMatch.txt', 'r')
+                    for line in updateResultFile:
+                        finishedMatchParts = line.split(' ')
+                        matchID = finishedMatchParts[0]
+                        result = finishedMatchParts[1]
+                        if username == result:
+                            self.result.SetLabel('YOU WON!!!!')
+                        else:
+                            self.result.SetLabel('You Lost :( ')
+                        print s.Update_Match_Results(result, matchID)
+                    updateResultFile.close()
+                    os.remove('FinishedMatch.txt')
+                elif earlyRange > 30 and lateRange < -30:
                     self.result.SetLabel('You are too early')
-                elif matchParts3DropEnd[0] == 'AM' and timeEnd == 'PM':
+                elif lateRange > 30 and earlyRange < -30:
                     self.result.SetLabel('You are too late, Match Expired')
                     updateResultFile = open('FinishedMatch.txt', 'w')
                     updateResultFile.write(matchParts[0] + ' Expired')
@@ -175,7 +151,6 @@ class windowClass(wx.Frame):
                         matchID = finishedMatchParts[0]
                         result = finishedMatchParts[1]
                         print s.Update_Match_Results(result, matchID)
-
                     updateResultFile.close()
                     os.remove('FinishedMatch.txt')
             else:
